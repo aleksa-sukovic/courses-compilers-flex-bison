@@ -4,6 +4,7 @@
 %token NUMBER
 %token ADD SUB MUL DIV ABS
 %token EOL
+%token OP CP
 %%
 calclist: /* nothing */
 | calclist exp EOL { printf("=%d\n", $2); }
@@ -18,6 +19,7 @@ factor: term { $$ = $1; }
 ;
 term: NUMBER { $$ = $1; }
 | ABS term { $$ = $2 >= 0 ? $2 : -$2; }
+| OP exp CP { $$ = $2; }
 ;
 %%
 int main (int argc, char **argv)
