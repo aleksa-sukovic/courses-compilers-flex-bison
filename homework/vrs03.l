@@ -8,6 +8,8 @@ L2 (b*|ab*ab*ab*)
 
 %{
     #include <stdio.h>
+    #define TRUE 1
+    #define FALSE 0
 
     struct Counter {
         int decimalNumbers;
@@ -56,15 +58,15 @@ int initialize(char* fileName)
 {
     if (!initializeFileInput(fileName)) {
         printf("Could not open file: %s\n", fileName);
-        return -1;
+        return FALSE;
     }
 
     if (!initializeCounter()) {
         printf("Could not initialize counter!\n");
-        return -1;
+        return FALSE;
     }
 
-    return 1;
+    return TRUE;
 }
 
 int initializeFileInput(char* fileName)
@@ -78,7 +80,7 @@ int initializeFileInput(char* fileName)
     buffer = yy_create_buffer(file, YY_BUF_SIZE);
     yy_switch_to_buffer(buffer);
 
-    return 1;
+    return TRUE;
 }
 
 int initializeCounter()
@@ -87,7 +89,7 @@ int initializeCounter()
 
     if (!counter) {
         printf("Error allocating counter memory!\n");
-        return -1;
+        return FALSE;
     }
 
     counter->binaryNumbers = 0;
@@ -95,7 +97,7 @@ int initializeCounter()
     counter->hexNumbers = 0;
     counter->words = 0;
 
-    return 1;
+    return TRUE;
 }
 
 
@@ -104,7 +106,7 @@ int closeFileInput()
     fclose(file);
     yy_delete_buffer(buffer);
 
-    return 0;
+    return TRUE;
 }
 
 void printOutput()
