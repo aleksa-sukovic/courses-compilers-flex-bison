@@ -8,6 +8,7 @@ L2 (b*|ab*ab*ab*)
 
 %{
     #include <stdio.h>
+    #include <string.h>
     #define TRUE 1
     #define FALSE 0
 
@@ -23,25 +24,47 @@ L2 (b*|ab*ab*ab*)
         int position;
     } *outputBuffer;
 
-    FILE* file;
-    YY_BUFFER_STATE inputBuffer;
+    struct File {
+        char* name;
+        FILE* handle;
+        YY_BUFFER_STATE inputBuffer;
+    };
+    struct File* file;
 
     int initialize(char* fileName);
+
+    struct File* createFile(char* fileName, char* mode);
+    int closeFile(struct File* file);
+
     int initializeFileInput(char* fileName);
     int initializeCounter(void);
     int initializeOutputBuffer(void);
+
     int writeToOutputBuffer(char* data, int length);
-    int writeToFile(FILE* file, char* data);
-    int closeFileInput(void);
+    int writeToFile(struct File* file, char* data);
+
     void printOutput(void);
+    void persistOutputBuffer(void);
+    int cleanUp(void);
 %}
 %%
-{DIGIT} { counter->decimalNumbers++; writeToOutputBuffer(yytext, yyleng); }
-{BINARY_DIGIT} { counter->binaryNumbers++; writeToOutputBuffer(yytext, yyleng); }
-{HEX_DIGIT} { counter->hexNumbers++; writeToOutputBuffer(yytext, yyleng); }
-.|\n { writeToOutputBuffer(yytext, yyleng); }
+{DIGIT} {
+    counter->decimalNumbers++;
+    writeToOutputBuffer(yytext, yyleng);
+}
+{BINARY_DIGIT} { 
+    counter->binaryNumbers++;
+    writeToOutputBuffer(yytext, yyleng);
+}
+{HEX_DIGIT} { 
+    counter->hexNumbers++;
+    writeToOutputBuffer(yytext, yyleng);
+}
+.|\n { 
+    writeToOutputBuffer(yytext, yyleng);
+}
 <<EOF>> {
-    return closeFileInput();
+    return 0;
 }
 %%
 int main(int argc , char** argv)
@@ -57,7 +80,10 @@ int main(int argc , char** argv)
     }
 
     yylex();
+
     printOutput();
+    persistOutputBuffer();
+    cleanUp();
 
     return 0;
 }
@@ -84,16 +110,39 @@ int initialize(char* fileName)
 
 int initializeFileInput(char* fileName)
 {
-    file = fopen(fileName, "r");
+    file = createFile(fileName, "r");
 
     if (!file) {
-        return 0;
+        printf("Error while creating new file!\n");
+        return FALSE;
     }
 
-    inputBuffer = yy_create_buffer(file, YY_BUF_SIZE);
-    yy_switch_to_buffer(inputBuffer);
+    file->inputBuffer = yy_create_buffer(file->handle, YY_BUF_SIZE);
+    yy_switch_to_buffer(file->inputBuffer);
 
     return TRUE;
+}
+
+struct File* createFile(char* fileName, char* mode)
+{
+    struct File* file = malloc(sizeof(struct File));
+
+    if (!file) {
+        printf("Could not allocate memory for file struct!\n");
+        return NULL;
+    }
+
+    file->handle = fopen(fileName, mode);
+    file->name = malloc(sizeof(char) * strlen(fileName));
+    file->inputBuffer = yy_create_buffer(file->handle, YY_BUF_SIZE);
+
+    if (!file->handle || !file->name) {
+        printf("Could not open the file!");
+        return NULL;
+    }
+
+    strcpy(file->name, fileName);
+    return file;
 }
 
 int initializeCounter()
@@ -136,17 +185,18 @@ int writeToOutputBuffer(char* data, int length)
     outputBuffer->content[outputBuffer->position] = '\0';
 }
 
-int writeToFile(FILE* file, char* data)
+int writeToFile(struct File* file, char* data)
 {
-    fprintf(file, "%s", data);
+    fprintf(file->handle, "%s", data);
 
     return TRUE;
 }
 
-int closeFileInput()
+int closeFile(struct File* file)
 {
-    fclose(file);
-    yy_delete_buffer(inputBuffer);
+    fclose(file->handle);
+    yy_delete_buffer(file->inputBuffer);
+    free(file);
 
     return TRUE;
 }
@@ -158,5 +208,27 @@ void printOutput()
     printf("\tBinary number count: %d\n", counter->binaryNumbers);
     printf("\tHex number count: %d\n", counter->hexNumbers);
     printf("\tWords count: %d\n", counter->words);
-    printf("\tTransofrmed output: %s\n", outputBuffer->content);
+}
+
+void persistOutputBuffer()
+{
+    struct File* output = createFile(file->name, "w");
+
+    if (!output) {
+        printf("Could not open file: %s for writing!\n", file->name);
+        return;
+    }
+
+    writeToFile(output, outputBuffer->content);
+    closeFile(output);
+}
+
+int cleanUp()
+{
+    closeFile(file);
+    free(counter);
+    free(outputBuffer->content);
+    free(outputBuffer);
+
+    return TRUE;
 }
