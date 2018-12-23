@@ -18,20 +18,28 @@ L2 (b*|ab*ab*ab*)
         int words;
     } *counter;
 
+    struct OutputBuffer {
+        char* content;
+        int position;
+    } *outputBuffer;
+
     FILE* file;
-    YY_BUFFER_STATE buffer;
+    YY_BUFFER_STATE inputBuffer;
 
     int initialize(char* fileName);
     int initializeFileInput(char* fileName);
     int initializeCounter(void);
+    int initializeOutputBuffer(void);
+    int writeToOutputBuffer(char* data, int length);
+    int writeToFile(FILE* file, char* data);
     int closeFileInput(void);
     void printOutput(void);
 %}
 %%
-{DIGIT} { counter->decimalNumbers++; }
-{BINARY_DIGIT} { counter->binaryNumbers++; }
-{HEX_DIGIT} { counter->hexNumbers++; }
-.|\n
+{DIGIT} { counter->decimalNumbers++; writeToOutputBuffer(yytext, yyleng); }
+{BINARY_DIGIT} { counter->binaryNumbers++; writeToOutputBuffer(yytext, yyleng); }
+{HEX_DIGIT} { counter->hexNumbers++; writeToOutputBuffer(yytext, yyleng); }
+.|\n { writeToOutputBuffer(yytext, yyleng); }
 <<EOF>> {
     return closeFileInput();
 }
@@ -66,6 +74,11 @@ int initialize(char* fileName)
         return FALSE;
     }
 
+    if (!initializeOutputBuffer()) {
+        printf("Could not initialize output buffer!\n");
+        return FALSE;
+    }
+
     return TRUE;
 }
 
@@ -77,8 +90,8 @@ int initializeFileInput(char* fileName)
         return 0;
     }
 
-    buffer = yy_create_buffer(file, YY_BUF_SIZE);
-    yy_switch_to_buffer(buffer);
+    inputBuffer = yy_create_buffer(file, YY_BUF_SIZE);
+    yy_switch_to_buffer(inputBuffer);
 
     return TRUE;
 }
@@ -100,11 +113,40 @@ int initializeCounter()
     return TRUE;
 }
 
+int initializeOutputBuffer()
+{
+    outputBuffer = malloc(sizeof(struct OutputBuffer));
+
+    if (!outputBuffer) {
+        printf("Error allocating output buffer memory!\n");
+        return FALSE;
+    }
+
+    outputBuffer->position = 0;
+    outputBuffer->content = malloc(sizeof(char) * YY_BUF_SIZE);
+}
+
+int writeToOutputBuffer(char* data, int length)
+{
+    int i;
+    for (i = 0; i < length; i++) {
+        outputBuffer->content[outputBuffer->position++] = data[i];
+    }
+
+    outputBuffer->content[outputBuffer->position] = '\0';
+}
+
+int writeToFile(FILE* file, char* data)
+{
+    fprintf(file, "%s", data);
+
+    return TRUE;
+}
 
 int closeFileInput()
 {
     fclose(file);
-    yy_delete_buffer(buffer);
+    yy_delete_buffer(inputBuffer);
 
     return TRUE;
 }
@@ -116,4 +158,5 @@ void printOutput()
     printf("\tBinary number count: %d\n", counter->binaryNumbers);
     printf("\tHex number count: %d\n", counter->hexNumbers);
     printf("\tWords count: %d\n", counter->words);
+    printf("\tTransofrmed output: %s\n", outputBuffer->content);
 }
