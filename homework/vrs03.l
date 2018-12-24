@@ -44,6 +44,7 @@ L2 ((b*ab*ab*ab*)*)
     int writeToOutputBuffer(char* data, int length);
     int writeToFile(struct File* file, char* data);
 
+    int processWord(void);
     void printOutput(void);
     void persistOutputBuffer(void);
     int cleanUp(void);
@@ -62,12 +63,14 @@ L2 ((b*ab*ab*ab*)*)
     writeToOutputBuffer(yytext, yyleng);
 }
 {L1} {
-    counter->l1Words++;
-    writeToOutputBuffer(yytext, yyleng);
+    if (processWord()) {
+        counter->l1Words++;
+    }
 }
 {L2} {
-    counter->l2Words++;
-    writeToOutputBuffer(yytext, yyleng);
+    if (processWord()) {
+        counter->l2Words++;
+    }
 }
 .|\n { 
     writeToOutputBuffer(yytext, yyleng);
@@ -193,6 +196,25 @@ int writeToOutputBuffer(char* data, int length)
     }
 
     outputBuffer->content[outputBuffer->position] = '\0';
+}
+
+int processWord()
+{
+    writeToOutputBuffer(yytext, yyleng);
+    char next = input();
+
+    if (next == ' ' || next == '\n') {
+        unput(next);
+        return TRUE;
+    }
+
+    do {
+        writeToOutputBuffer(&next, 1);
+    } while((next = input()) && next != ' ' && next != '\n' && next != 0);
+
+    unput(next);
+
+    return FALSE;
 }
 
 int writeToFile(struct File* file, char* data)
