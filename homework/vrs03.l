@@ -4,7 +4,7 @@ DIGIT ([1-9][0-9]*|0)
 BINARY_DIGIT (1[01]*"[2]")
 HEX_DIGIT ([1-9A-Fa-f][0-9A-Fa-f]*"[16]")
 L1 ((ab+|aab+)+|b)
-L2 (b*|ab*ab*ab*)
+L2 ((b*ab*ab*ab*)*)
 
 %{
     #include <stdio.h>
@@ -16,7 +16,8 @@ L2 (b*|ab*ab*ab*)
         int decimalNumbers;
         int binaryNumbers;
         int hexNumbers;
-        int words;
+        int l1Words;
+        int l2Words;
     } *counter;
 
     struct OutputBuffer {
@@ -58,6 +59,14 @@ L2 (b*|ab*ab*ab*)
 }
 {HEX_DIGIT} { 
     counter->hexNumbers++;
+    writeToOutputBuffer(yytext, yyleng);
+}
+{L1} {
+    counter->l1Words++;
+    writeToOutputBuffer(yytext, yyleng);
+}
+{L2} {
+    counter->l2Words++;
     writeToOutputBuffer(yytext, yyleng);
 }
 .|\n { 
@@ -157,7 +166,8 @@ int initializeCounter()
     counter->binaryNumbers = 0;
     counter->decimalNumbers = 0;
     counter->hexNumbers = 0;
-    counter->words = 0;
+    counter->l1Words = 0;
+    counter->l2Words = 0;
 
     return TRUE;
 }
@@ -207,7 +217,8 @@ void printOutput()
     printf("\tDecimal number count: %d\n", counter->decimalNumbers);
     printf("\tBinary number count: %d\n", counter->binaryNumbers);
     printf("\tHex number count: %d\n", counter->hexNumbers);
-    printf("\tWords count: %d\n", counter->words);
+    printf("\tL1 Words count: %d\n", counter->l1Words);
+    printf("\tL2 Words count: %d\n", counter->l2Words);
 }
 
 void persistOutputBuffer()
