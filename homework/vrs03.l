@@ -56,7 +56,8 @@ L2 ((b*ab*ab*ab*)*)
     int convertToLowercase(char c);
 
     char* convertToBinary(int base);
-    char* convertToBinaryString(long number, int base);
+    char* convertToBinaryString(long number, char* output, int* index);
+    char* addNumberBase(char* string);
 
     void printOutput(void);
     void persistOutputBuffer(void);
@@ -289,12 +290,31 @@ char* convertToBinary(int base)
     strncpy(strippedInput, yytext, length);
     number = strtol(strippedInput, NULL, base);
     
-    return convertToBinaryString(number, base);
+    int index = 0;
+    return addNumberBase(convertToBinaryString(number, strippedInput, &index));
 }
 
-char* convertToBinaryString(long number, int base)
+char* convertToBinaryString(long number, char* output, int* index)
 {
-   return "BINARY_STRING";
+   if (number == 0) {
+       return output;
+   }
+
+   convertToBinaryString(number / 2, output, index);
+   output[(*index)++] = (number % 2) + '0';
+   return output;
+}
+
+char* addNumberBase(char* string)
+{
+    int index = strlen(string);
+
+    string[index++] = '[';
+    string[index++] = '2';
+    string[index++] = ']';
+    string[index++] = '\0';
+
+    return string;
 }
 
 int writeToOutputBuffer(char* data, int length)
