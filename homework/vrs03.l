@@ -8,11 +8,12 @@ L2 ((b*ab*ab*ab*)*)
 
 %{
     #include <stdio.h>
+    #include <stdlib.h>
     #include <string.h>
     #define TRUE 1
     #define FALSE 0
-    #define L1 3987
-    #define L2 3988
+    #define HEX_BASE 16
+    #define DECIMAL_BASE 10
 
     struct Counter {
         int decimalNumbers;
@@ -46,13 +47,16 @@ L2 ((b*ab*ab*ab*)*)
     int writeToOutputBuffer(char* data, int length);
     int writeToFile(struct File* file, char* data);
 
-    int processWord(int);
-    int isValidWord();
-    void skipToWordEnd();
+    int processWord(void);
+    int isValidWord(void);
+    void skipToWordEnd(void);
     char* convertWord(char* word);
     char convertLetter(char letter, int uppercase);
     int converToUppercase(char c);
     int convertToLowercase(char c);
+
+    char* convertToBinary(int base);
+    char* convertToBinaryString(long number, int base);
 
     void printOutput(void);
     void persistOutputBuffer(void);
@@ -61,6 +65,7 @@ L2 ((b*ab*ab*ab*)*)
 %%
 {DIGIT} {
     counter->decimalNumbers++;
+    printf("ToBinary: %s\n", convertToBinary(DECIMAL_BASE));
     writeToOutputBuffer(yytext, yyleng);
 }
 {BINARY_DIGIT} { 
@@ -69,15 +74,16 @@ L2 ((b*ab*ab*ab*)*)
 }
 {HEX_DIGIT} { 
     counter->hexNumbers++;
+    printf("ToBinary: %s\n", convertToBinary(HEX_BASE));
     writeToOutputBuffer(yytext, yyleng);
 }
 {L1} {
-    if (processWord(L1)) {
+    if (processWord()) {
         counter->l1Words++;
     }
 }
 {L2} {
-    if (processWord(L2)) {
+    if (processWord()) {
         counter->l2Words++;
     }
 }
@@ -272,6 +278,23 @@ void skipToWordEnd()
     }
 
     unput(next);
+}
+
+char* convertToBinary(int base)
+{
+    long number;
+    int length = base == HEX_BASE ? yyleng - 3 : yyleng;
+    char* strippedInput = malloc(sizeof(char) * length);
+
+    strncpy(strippedInput, yytext, length);
+    number = strtol(strippedInput, NULL, base);
+    
+    return convertToBinaryString(number, base);
+}
+
+char* convertToBinaryString(long number, int base)
+{
+   return "BINARY_STRING";
 }
 
 int writeToOutputBuffer(char* data, int length)
