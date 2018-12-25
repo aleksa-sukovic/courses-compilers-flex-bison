@@ -49,7 +49,10 @@ L2 ((b*ab*ab*ab*)*)
     int processWord(int);
     int isValidWord();
     void skipToWordEnd();
-    char* convertWord(int language, char* word);
+    char* convertWord(char* word);
+    char convertLetter(char letter, int uppercase);
+    int converToUppercase(char c);
+    int convertToLowercase(char c);
 
     void printOutput(void);
     void persistOutputBuffer(void);
@@ -193,21 +196,10 @@ int initializeOutputBuffer()
     outputBuffer->content = malloc(sizeof(char) * YY_BUF_SIZE);
 }
 
-int writeToOutputBuffer(char* data, int length)
-{
-    int i;
-
-    for (i = 0; i < length; i++) {
-        outputBuffer->content[outputBuffer->position++] = data[i];
-    }
-
-    outputBuffer->content[outputBuffer->position] = '\0';
-}
-
-int processWord(int language)
+int processWord()
 {
     if (isValidWord()) {
-        char* converted = convertWord(language, yytext);
+        char* converted = convertWord(yytext);
         writeToOutputBuffer(converted, strlen(converted));
         return TRUE;
     }
@@ -232,9 +224,43 @@ int isValidWord()
     return result;
 }
 
-char* convertWord(int language, char* word)
+char* convertWord(char* word)
 {
+    int i, n = strlen(word), uppercase = TRUE;
+
+    for (i = 0; i < n; i++) {
+        word[i] = convertLetter(word[i], uppercase);
+        uppercase = uppercase ? FALSE : TRUE;
+    }
+
     return word;
+}
+
+char convertLetter(char letter, int uppercase)
+{
+    if (uppercase) {
+        return converToUppercase(letter);
+    }
+
+    return convertToLowercase(letter);
+}
+
+int converToUppercase(char c)
+{
+    if (c >= 'A' && c <= 'Z') {
+        return c;
+    }
+
+    return c - 32;
+}
+
+int convertToLowercase(char c)
+{
+    if (c >= 'a' && c <= 'z') {
+        return c;
+    }
+
+    return c + 32;
 }
 
 void skipToWordEnd()
@@ -246,6 +272,17 @@ void skipToWordEnd()
     }
 
     unput(next);
+}
+
+int writeToOutputBuffer(char* data, int length)
+{
+    int i;
+
+    for (i = 0; i < length; i++) {
+        outputBuffer->content[outputBuffer->position++] = data[i];
+    }
+
+    outputBuffer->content[outputBuffer->position] = '\0';
 }
 
 int writeToFile(struct File* file, char* data)
