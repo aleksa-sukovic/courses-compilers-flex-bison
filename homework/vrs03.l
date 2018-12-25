@@ -11,6 +11,8 @@ L2 ((b*ab*ab*ab*)*)
     #include <string.h>
     #define TRUE 1
     #define FALSE 0
+    #define L1 3987
+    #define L2 3988
 
     struct Counter {
         int decimalNumbers;
@@ -44,7 +46,11 @@ L2 ((b*ab*ab*ab*)*)
     int writeToOutputBuffer(char* data, int length);
     int writeToFile(struct File* file, char* data);
 
-    int processWord(void);
+    int processWord(int);
+    int isValidWord();
+    void skipToWordEnd();
+    char* convertWord(int language, char* word);
+
     void printOutput(void);
     void persistOutputBuffer(void);
     int cleanUp(void);
@@ -63,12 +69,12 @@ L2 ((b*ab*ab*ab*)*)
     writeToOutputBuffer(yytext, yyleng);
 }
 {L1} {
-    if (processWord()) {
+    if (processWord(L1)) {
         counter->l1Words++;
     }
 }
 {L2} {
-    if (processWord()) {
+    if (processWord(L2)) {
         counter->l2Words++;
     }
 }
@@ -145,15 +151,14 @@ struct File* createFile(char* fileName, char* mode)
     }
 
     file->handle = fopen(fileName, mode);
-    file->name = malloc(sizeof(char) * strlen(fileName));
+    file->name = strdup(fileName);
     file->inputBuffer = yy_create_buffer(file->handle, YY_BUF_SIZE);
 
-    if (!file->handle || !file->name) {
+    if (!file->handle) {
         printf("Could not open the file!");
         return NULL;
     }
 
-    strcpy(file->name, fileName);
     return file;
 }
 
@@ -166,11 +171,11 @@ int initializeCounter()
         return FALSE;
     }
 
-    counter->binaryNumbers = 0;
+    counter->binaryNumbers  = 0;
     counter->decimalNumbers = 0;
-    counter->hexNumbers = 0;
-    counter->l1Words = 0;
-    counter->l2Words = 0;
+    counter->hexNumbers     = 0;
+    counter->l1Words        = 0;
+    counter->l2Words        = 0;
 
     return TRUE;
 }
@@ -191,6 +196,7 @@ int initializeOutputBuffer()
 int writeToOutputBuffer(char* data, int length)
 {
     int i;
+
     for (i = 0; i < length; i++) {
         outputBuffer->content[outputBuffer->position++] = data[i];
     }
@@ -198,23 +204,48 @@ int writeToOutputBuffer(char* data, int length)
     outputBuffer->content[outputBuffer->position] = '\0';
 }
 
-int processWord()
+int processWord(int language)
 {
-    writeToOutputBuffer(yytext, yyleng);
-    char next = input();
-
-    if (next == ' ' || next == '\n') {
-        unput(next);
+    if (isValidWord()) {
+        char* converted = convertWord(language, yytext);
+        writeToOutputBuffer(converted, strlen(converted));
         return TRUE;
     }
 
-    do {
+    writeToOutputBuffer(yytext, yyleng);
+    skipToWordEnd();
+    return FALSE;
+}
+
+int isValidWord()
+{
+    char* saved = strdup(yytext);
+    char next   = input();
+    int result  = FALSE;
+    
+    if (next == ' ' || next == '\n' || next == 0) {
+        result = TRUE;
+    }
+    
+    unput(next);
+    yytext = saved;
+    return result;
+}
+
+char* convertWord(int language, char* word)
+{
+    return word;
+}
+
+void skipToWordEnd()
+{
+    char next;
+
+    while(!(next = input()) && next != ' ' && next != '\n') {
         writeToOutputBuffer(&next, 1);
-    } while((next = input()) && next != ' ' && next != '\n' && next != 0);
+    }
 
     unput(next);
-
-    return FALSE;
 }
 
 int writeToFile(struct File* file, char* data)
