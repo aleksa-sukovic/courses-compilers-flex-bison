@@ -45,7 +45,7 @@ L2 ((b*ab*ab*ab*)*)
     int initializeOutputBuffer(void);
 
     int writeToOutputBuffer(char* data, int length);
-    int writeToFile(struct File* file, char* data);
+    void writeToFile(struct File* file, char* data);
 
     int processWord(void);
     int isValidWord(void);
@@ -160,8 +160,8 @@ struct File* createFile(char* fileName, char* mode)
         return NULL;
     }
 
-    file->handle = fopen(fileName, mode);
-    file->name = strdup(fileName);
+    file->handle      = fopen(fileName, mode);
+    file->name        = strdup(fileName);
     file->inputBuffer = yy_create_buffer(file->handle, YY_BUF_SIZE);
 
     if (!file->handle) {
@@ -200,7 +200,7 @@ int initializeOutputBuffer()
     }
 
     outputBuffer->position = 0;
-    outputBuffer->content = malloc(sizeof(char) * YY_BUF_SIZE);
+    outputBuffer->content  = malloc(sizeof(char) * YY_BUF_SIZE);
 }
 
 int processWord()
@@ -287,7 +287,7 @@ char* convertToBinary(int base)
     int length = base == HEX_BASE ? yyleng - 3 : yyleng;
     char* strippedInput = malloc(sizeof(char) * length);
 
-    strncpy(strippedInput, yytext, length);
+    strncpy(strippedInput, yytext, length); // actual number string value without [16]
     number = strtol(strippedInput, NULL, base);
     
     int index = 0;
@@ -328,11 +328,9 @@ int writeToOutputBuffer(char* data, int length)
     outputBuffer->content[outputBuffer->position] = '\0';
 }
 
-int writeToFile(struct File* file, char* data)
+void writeToFile(struct File* file, char* data)
 {
     fprintf(file->handle, "%s", data);
-
-    return TRUE;
 }
 
 int closeFile(struct File* file)
