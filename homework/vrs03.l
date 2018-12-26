@@ -66,8 +66,8 @@ L2 ((b*ab*ab*ab*)*)
 %%
 {DIGIT} {
     counter->decimalNumbers++;
-    printf("ToBinary: %s\n", convertToBinary(DECIMAL_BASE));
-    writeToOutputBuffer(yytext, yyleng);
+    char* converted = convertToBinary(DECIMAL_BASE);
+    writeToOutputBuffer(converted, strlen(converted));
 }
 {BINARY_DIGIT} { 
     counter->binaryNumbers++;
@@ -75,8 +75,8 @@ L2 ((b*ab*ab*ab*)*)
 }
 {HEX_DIGIT} { 
     counter->hexNumbers++;
-    printf("ToBinary: %s\n", convertToBinary(HEX_BASE));
-    writeToOutputBuffer(yytext, yyleng);
+    char* converted = convertToBinary(HEX_BASE);
+    writeToOutputBuffer(converted, strlen(converted));
 }
 {L1} {
     if (processWord()) {
