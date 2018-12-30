@@ -1,4 +1,5 @@
 %{
+    #include <string.h>
     #include "kangaroo_calculator.tab.h"
 %}
 INTEGER_DIGIT (0|[1-9][0-9]*)
@@ -8,34 +9,43 @@ KEYWORD_DOUBLE "double"
 VARIABLE_NAME [a-zA-Z][_a-zA-Z0-9]*
 %%
 {KEYWORD_DOUBLE} {
-    printf("Keyword double: %s\n", yytext);
+    return DOUBLE_DECL;
 }
 {KEYWORD_INT} {
-    printf("Keyword int: %s\n", yytext);
+    return INT_DECL;
 }
 {INTEGER_DIGIT} {
-    printf("Integer digit: %s\n", yytext);
+    yylval.int_value = atoi(yytext);
+
+    return INT_VAL;
 }
 {DOUBLE_DIGIT} {
-    printf("Double digit: %s\n", yytext);
+    yylval.double_value = atof(yytext);
+
+    return DOUBLE_VAL;
 }
 {VARIABLE_NAME} {
-    printf("Variable name: %s\n", yytext);
+    int size = sizeof(yytext);
+
+    strncpy(yylval.variable.name, yytext, size);
+    yylval.variable.name[size - 1] = '\0';
+
+    return VARIABLE;
 }
 ";" {
-    printf("Expression end");
+    return DELIMITER;
 }
 "+" {
-    printf(" Plus \n");
+    return PLUS;
 }
 "-" {
-    printf(" Minus \n");
+    return MINUS;
 }
 "*" {
-    printf(" Times \n");
+    return TIMES;
 }
 "/" {
-    printf(" Divided \n");
+    return DIVIDE;
 }
 [ \t\n]+ {
     /* ignoring whitespaces */
