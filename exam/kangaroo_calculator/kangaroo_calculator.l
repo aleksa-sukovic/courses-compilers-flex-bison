@@ -15,12 +15,12 @@ VARIABLE_NAME [a-zA-Z][_a-zA-Z0-9]*
     return INT_DECL;
 }
 {INTEGER_DIGIT} {
-    yylval.int_value = atoi(yytext);
+    yylval.value.int_value = atoi(yytext);
 
     return INT_VAL;
 }
 {DOUBLE_DIGIT} {
-    yylval.double_value = atof(yytext);
+    yylval.value.double_value = atof(yytext);
 
     return DOUBLE_VAL;
 }
@@ -46,6 +46,12 @@ VARIABLE_NAME [a-zA-Z][_a-zA-Z0-9]*
 }
 "/" {
     return DIVIDE;
+}
+"(" {
+    return OB;
+}
+")" {
+    return CB;
 }
 [ \t\n]+ {
     /* ignoring whitespaces */
