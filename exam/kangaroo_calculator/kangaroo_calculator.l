@@ -15,20 +15,19 @@ VARIABLE_NAME [a-zA-Z][_a-zA-Z0-9]*
     return INT_DECL;
 }
 {INTEGER_DIGIT} {
-    yylval.value.int_value = atoi(yytext);
+    yylval.var.value.int_value = atoi(yytext);
 
     return INT_VAL;
 }
 {DOUBLE_DIGIT} {
-    yylval.value.double_value = atof(yytext);
+    yylval.var.value.double_value = atof(yytext);
 
     return DOUBLE_VAL;
 }
 {VARIABLE_NAME} {
     int size = sizeof(yytext);
 
-    strncpy(yylval.variable.name, yytext, size);
-    yylval.variable.name[size - 1] = '\0';
+    yylval.var.name = strdup(yytext);
 
     return VARIABLE;
 }
