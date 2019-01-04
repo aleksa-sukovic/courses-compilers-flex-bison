@@ -13,7 +13,6 @@
 
 %%
 Exp: Exp Stmt EOL {
-    // printf("\nExpression: %d\n> ", $2);
     printf("\n");
 }
 | /* epsilon */

@@ -1,5 +1,5 @@
 %{
-    #include "prefix.tab.h"
+    #include "postfix.tab.h"
 %}
 DIGIT [1-9][0-9]*|0
 %%
