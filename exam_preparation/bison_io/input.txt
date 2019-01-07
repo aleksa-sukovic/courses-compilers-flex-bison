@@ -1,0 +1,4 @@
+true or not false;
+false OR TRUE;
+f and not t;
+true or (not false and false);
